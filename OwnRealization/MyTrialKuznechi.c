@@ -1,7 +1,7 @@
 //  from хакер.ру
 #include <stdint.h>
 #include <stdio.h>
-
+#define BUFF_SIZE 1024
 
 // мы используем блоки по 16 байт (128 бит) и для этого определяем вектор
 #define BLOCK_SIZE 16                 
@@ -124,11 +124,11 @@ static const unsigned char l_vec[16] = {
 
 
 // Преобразование R, в котором мы полиномиально умножаем каждый байт с исполльзованием одной константы из l вектора, сдвигаем и записываем результат
-static void GOST_Kuz_R(uint8_t* state){
+static void GOST_Kuz_R(uint8_t* state) {
 	int i;
 	uint8_t a_15 = 0;
 	vect internal;
-	for (i = 15; i >= 0; i--){
+	for (i = 15; i >= 0; i--) {
 		internal[i - 1] = state[i];// Двигаем байты в сторону младшего разряда
 		a_15 ^= GOST_Kuz_GF_mul(state[i], l_vec[i]);
 	}
@@ -164,7 +164,7 @@ vect iter_num[32];// Сюда будем писать номер итерации от 1 до 32
 // Вопрос: не совсем понятно как мы заполняем массив iter_num.... нулями или по возрастанию... что в него пишем?
 // массив С заполняем итерационными константами, которые потом будем использовать в 
 void GOST_Kuz_Get_C() {
-	for (int i = 0; i < 32; i++){
+	for (int i = 0; i < 32; i++) {
 		memset(iter_num[i], 0, BLOCK_SIZE);
 		iter_num[i][0] = i + 1;
 	}
@@ -178,8 +178,8 @@ void GOST_Kuz_Get_C() {
 // Функция F - одна операция развертывания
 //Для того чтобы получить нужные нам десять итерационных (раундовых) ключей, нужно прокрутить функцию GOST_Kuz_F 32 раза.
 static void GOST_Kuz_F(const uint8_t* in_key_1, const uint8_t* in_key_2,
-						uint8_t* out_key_1, uint8_t* out_key_2,
-						uint8_t* iter_const){
+	uint8_t* out_key_1, uint8_t* out_key_2,
+	uint8_t* iter_const) {
 	vect internal;
 	memcpy(out_key_2, in_key_1, BLOCK_SIZE);
 	GOST_Kuz_X(in_key_1, iter_const, internal);
@@ -199,10 +199,10 @@ vect iter_key[10]; // Итерационные ключи шифрования
 //num - Количество копируемых байтов.
 
 // Развертывание ключей
-void GOST_Kuz_Expand_Key(const uint8_t* key_1, const uint8_t* key_2){
+void GOST_Kuz_Expand_Key(const uint8_t* key_1, const uint8_t* key_2) {
 	int i;
 	// на первой итерации мы разбиваем master key надвое и получаем первую пару. Потом мы используем алгоритм, чтобы получать следующие пары ключей
-	
+
 	// Предыдущая пара ключей
 	uint8_t iter_1[64];
 	uint8_t iter_2[64];
@@ -218,7 +218,7 @@ void GOST_Kuz_Expand_Key(const uint8_t* key_1, const uint8_t* key_2){
 	memcpy(iter_1, key_1, 64);
 	memcpy(iter_2, key_2, 64);
 
-	for (i = 0; i < 4; i++){
+	for (i = 0; i < 4; i++) {
 		GOST_Kuz_F(iter_1, iter_2, iter_3, iter_4, iter_C[0 + 8 * i]);
 		GOST_Kuz_F(iter_3, iter_4, iter_1, iter_2, iter_C[1 + 8 * i]);
 		GOST_Kuz_F(iter_1, iter_2, iter_3, iter_4, iter_C[2 + 8 * i]);
@@ -282,12 +282,22 @@ static void GOST_Kuz_reverse_S(const uint8_t* in_data, uint8_t* out_data)
 // 3. У нас 9 раундов, поэтому в цикле мы поочередно применяем преобразование Х (сложение по модуля 2), S (нелинейное пр-е с массивм pi)  и L (в котором мы 16 раз применям функцию R с умножением полиномов)
 // Вопрос: не понятно зачем нам последняя строчка сложения....?
 
-void GOST_Kuz_Encript(const uint8_t* blk, uint8_t* out_blk) {
+void GOST_Kuz_Encript(const uint8_t* blk, uint8_t* out_blk, uint8_t* key256b) {
 	int i;
+	uint8_t* key1 = NULL, key2 = NULL;
 	memcpy(out_blk, blk, BLOCK_SIZE);
 	// Вот тут не уверена как мы должны передать первые ключи. По сути это первый мастре ключ пополам но хз
 	// тут надо заполнить массив ключей
-	GOST_Kuz_Expand_Key(key1, key2);
+	static uint8_t key_1[16] =
+	{ 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, (uint8_t)0xff, (uint8_t)0xee,
+	(uint8_t)0xdd, (uint8_t)0xcc, (uint8_t)0xbb, (uint8_t)0xaa, (uint8_t)0x99, (uint8_t)0x88 };
+
+	static uint8_t key_2[16] =
+	{ (uint8_t)0xef, (uint8_t)0xcd, (uint8_t)0xab, (uint8_t)0x89, 0x67, 0x45, 0x23, 0x01,
+	0x10, 0x32, 0x54, 0x76, (uint8_t)0x98, (uint8_t)0xba, (uint8_t)0xdc, (uint8_t)0xfe };
+	uint8_t encrypted[BUFF_SIZE], decrypted[BUFF_SIZE];
+
+	GOST_Kuz_Expand_Key(key_1, key_2);
 	for (int i = 0; i < 16; i++) {
 		printf("%0x ", key1[i]);
 	}
@@ -315,22 +325,50 @@ void GOST_Kuz_Decript(const uint8_t* blk, uint8_t* out_blk) {
 	}
 }
 
-
-
-int main() {
-	const uint8_t block[32] = {
-	0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
-	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-	0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10,
-	0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF
-	};
-	vect outBlock[BLOCK_SIZE];
-
-	GOST_Kuz_Encript(block, outBlock);
+static inline void print_array_dec(uint8_t* array, size_t length) {
+	printf("[ ");
+	for (size_t i = 0; i < length; ++i)
+		printf("%d ", array[i]);
+	printf("]\n");
 }
 
+static inline void print_array_hex(uint8_t* array, size_t length) {
+	printf("[ ");
+	for (size_t i = 0; i < length; ++i)
+		printf("%h ", array[i]);
+	printf("]\n");
+}
 
-// вопросы:
-// заполнение массива iter_num в GOST_Kuz_Get_C как и зачем?
-// как определить master key
-// алгоритм main
+int main() {
+	uint8_t key256b[32] = "this_is_a_pasw_for_GOST_28147_89";
+	uint8_t buffer[BUFF_SIZE], ch, outBlock[BUFF_SIZE];
+	size_t position = 0;
+	while ((ch = getchar()) != '\n' && position < BUFF_SIZE - 1)
+		buffer[position++] = ch;
+	buffer[position] = '\0';
+
+	printf("Open message:\n");
+	print_array_dec(buffer, position);
+	printf("%s\n", buffer);
+	putchar('\n');
+
+	GOST_Kuz_Encript(buffer, outBlock, key256b);
+
+	printf("Encrypted message:\n");
+	print_array_dec(outBlock, position);
+	printf("%s\n", outBlock);
+	putchar('\n');
+
+
+
+
+	//const uint8_t block[32] = {
+	//0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+	//0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	//0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10,
+	//0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF
+	//};
+	//vect outBlock[BLOCK_SIZE];
+
+	//GOST_Kuz_Encript(block, outBlock, key256b);
+}

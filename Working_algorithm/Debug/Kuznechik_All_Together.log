@@ -1,0 +1,4 @@
+﻿  kuznechic.cpp
+C:\Users\z.kate\Desktop\4 семестр\OPD_Project\OwnRealization\kuznechic.cpp(252,15): warning C4101: outBlock: неиспользованная локальная переменная
+C:\Users\z.kate\Desktop\4 семестр\OPD_Project\OwnRealization\kuznechic.cpp(252,11): warning C4101: ch: неиспользованная локальная переменная
+  Kuznechik_All_Together.vcxproj -> C:\Users\z.kate\Desktop\4 семестр\OPD_Project\OwnRealization\Debug\Kuznechik_All_Together.exe

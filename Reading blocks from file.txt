@@ -1,0 +1,56 @@
+#include "stdafx.h"
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+ifstream file("text.txt");              //Можно инициализировать поток глобально, а можно как закомменчено в начале мейна, не уверен как лучше
+
+int main()
+{
+	//ifstream file;
+	//file.open("text.txt");
+
+	if (!file.is_open())								         //Проверка ошибки открытия файла
+	{ 
+		cout << "Bro, something isn't good, i cant open the file" << endl;
+		return -1;
+	}
+
+
+	int Sym_num = -1;											 //Кол-во символов в файле, изначально -1 т.к. при подсчёте получится значение, на 1 превосходящее истинное
+	char buff;													 //Буффер для подсчёта символов
+	while (file.get(buff))  
+	{
+		Sym_num++;
+	}
+
+	file.clear();												 //Переход обратно в начало потока после подсчёта сиволов
+	file.seekg(0, ios_base::beg);
+
+	cout << "Number of symbols in file: "<<Sym_num << endl;	     //Для отладки и проверки
+
+	int blocks_count = Sym_num / 16;							 //Количество блоков 
+	if (Sym_num % 16 != 0)
+		blocks_count++;
+
+	cout << "Number of blocks: " << blocks_count << endl << endl;//Для отладки и проверки
+
+	char block[17];												 //Массив под блок данных с файла
+	while (blocks_count--)						
+	{
+		for (int i = 0; i < 16; i++)							 //Сам цикл считывания блоков
+		{
+			block[i] = '\0';						//Чтобы убрать из 2го, 3го.... полученного блока символы, остающиеся после предыдущих иттераций
+			file.get(block[i]);
+			cout << block[i];
+			if (block[i] == '\0')
+				break;
+		}
+		block[16] = '\0';
+		cout << endl;
+	}
+
+	file.close();
+    return 0;
+}

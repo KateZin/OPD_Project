@@ -5,3 +5,12 @@
 *.pdb
 *.idb
 *.obj
+*.recipe
+*.pch
+*.h
+
+Kuznechic_Unit_Test/pch.cpp
+*.config
+*.txt
+*.CopyComplete
+*.vcxproj

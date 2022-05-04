@@ -18,3 +18,4 @@
 *.CopyComplete
 *.vcxproj
 
+Kuznechic_Unit_Test/pch.cpp

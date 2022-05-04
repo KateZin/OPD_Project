@@ -5,3 +5,11 @@
 *.pdb
 *.idb
 *.obj
+*.recipe
+*.pch
+*.CopyComplete
+*.vcxproj
+*.txt
+*.cpp
+*.h
+*.config

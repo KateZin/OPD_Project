@@ -12,4 +12,9 @@
 *.txt
 *.h
 *.config
-Kuznechic_Unit_Test/pch.cpp
+*.h
+*.config
+*.txt
+*.CopyComplete
+*.vcxproj
+

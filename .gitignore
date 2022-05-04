@@ -10,6 +10,6 @@
 *.CopyComplete
 *.vcxproj
 *.txt
-*.cpp
 *.h
 *.config
+Kuznechic_Unit_Test/pch.cpp
